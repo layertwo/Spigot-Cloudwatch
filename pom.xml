@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>github.metalshark.cloudwatch</groupId>
-    <artifactId>CloudWatch</artifactId>
+    <artifactId>spigot-cloudwatch</artifactId>
     <version>1.2.0</version>
 
     <name>CloudWatch</name>
