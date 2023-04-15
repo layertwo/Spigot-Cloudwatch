@@ -24,13 +24,13 @@ import java.util.concurrent.*;
 public class CloudWatch extends JavaPlugin {
 
     @Getter
-    private ChunkLoadListener chunkLoadListener = new ChunkLoadListener();
+    private final ChunkLoadListener chunkLoadListener = new ChunkLoadListener();
 
     @Getter
-    private PlayerJoinListener playerJoinListener = new PlayerJoinListener();
+    private final PlayerJoinListener playerJoinListener = new PlayerJoinListener();
 
     @Getter
-    private TickRunnable tickRunnable = new TickRunnable();
+    private final TickRunnable tickRunnable = new TickRunnable();
 
     @Getter
     private final static Map<String, EventCountListener> eventCountListeners = new ConcurrentHashMap<>();

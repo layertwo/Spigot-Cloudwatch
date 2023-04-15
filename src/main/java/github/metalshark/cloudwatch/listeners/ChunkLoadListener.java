@@ -1,6 +1,5 @@
 package github.metalshark.cloudwatch.listeners;
 
-import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.event.EventHandler;

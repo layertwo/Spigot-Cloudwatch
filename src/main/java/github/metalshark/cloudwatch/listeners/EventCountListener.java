@@ -1,6 +1,5 @@
 package github.metalshark.cloudwatch.listeners;
 
-import lombok.Getter;
 import org.bukkit.event.Listener;
 
 public class EventCountListener implements Listener {

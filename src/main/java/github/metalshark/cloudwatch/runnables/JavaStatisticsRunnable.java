@@ -64,11 +64,11 @@ public class JavaStatisticsRunnable implements Runnable {
             final UnixOperatingSystemMXBean unixOs = (UnixOperatingSystemMXBean) os;
             openFileDescriptors = unixOs.getOpenFileDescriptorCount();
             maxFileDescriptors = unixOs.getMaxFileDescriptorCount();
-            totalPhysicalMemorySize = unixOs.getTotalPhysicalMemorySize();
-            freePhysicalMemorySize = unixOs.getFreePhysicalMemorySize();
+            totalPhysicalMemorySize = unixOs.getTotalMemorySize();
+            freePhysicalMemorySize = unixOs.getFreeMemorySize();
             usedPhysicalMemorySize = totalPhysicalMemorySize - freePhysicalMemorySize;
             processCpuLoad = unixOs.getProcessCpuLoad() * 100;
-            systemCpuLoad = unixOs.getSystemCpuLoad() * 100;
+            systemCpuLoad = unixOs.getCpuLoad() * 100;
         }
 
         final Dimension dimension = CloudWatch.getDimension();
