@@ -11,7 +11,7 @@ mvn clean package
 # Output: target/CloudWatch-<version>.jar
 ```
 
-Java 14 source/target compatibility; CI uses JDK 17. No tests exist in this project.
+Java 17 source/target compatibility; CI uses JDK 17. No tests exist in this project.
 
 ## Architecture
 
@@ -32,7 +32,7 @@ If neither source is available the plugin disables itself.
 
 ### Listener pattern
 
-`EventCountListener` is the base class for all simple event counters. Subclasses register a single `@EventHandler` that increments `count`. Each minute `MinecraftStatisticsRunnable` calls `getCountAndReset()` on every entry in `CloudWatch.eventCountListeners` (a `ConcurrentHashMap<String, EventCountListener>`) and publishes one `MetricDatum` per entry.
+`EventCountListener` is the base class for all simple event counters. Subclasses register a single `@EventHandler` that increments an `AtomicLong count`. Each minute `MinecraftStatisticsRunnable` calls `getCountAndReset()` on every entry in `CloudWatch.eventCountListeners` (a `ConcurrentHashMap<String, EventCountListener>`) and publishes one `MetricDatum` per entry.
 
 Two listeners are **not** `EventCountListener` subclasses:
 - `ChunkLoadListener` — tracks current loaded-chunk count across load/unload events and exposes `getMaxAndReset()` (max chunks loaded during the period)
@@ -40,6 +40,6 @@ Two listeners are **not** `EventCountListener` subclasses:
 
 ### Deployment
 
-The Maven assembly plugin produces a fat JAR (`jar-with-dependencies`) that includes the AWS SDK v2 (`software.amazon.awssdk:cloudwatch`). This JAR is dropped into the Spigot `plugins/` directory. The IAM role must have `cloudwatch:PutMetricData` permission.
+The Maven assembly plugin produces a fat JAR (`jar-with-dependencies`) that includes the AWS SDK v2 (`software.amazon.awssdk:cloudwatch`). This JAR is dropped into the Spigot `plugins/` directory. The IAM role must have `cloudwatch:PutMetricData` permission. A single `CloudWatchClient` is created on enable and shared across both runnables; it is closed on disable.
 
 Releases are published to GitHub Packages via the `release.yml` workflow when a GitHub release is created.

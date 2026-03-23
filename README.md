@@ -13,10 +13,15 @@ mvn clean package
 # Output: target/CloudWatch-<version>.jar
 ```
 
-The plugin self-disables on startup if instance metadata is unreachable.
+The plugin self-disables on startup if instance metadata is unreachable. Requires Spigot 1.13+.
 
- ## Java Statistics
- All Java statistics collected are per minute and represent the current value or the count/total time during that period.
+## Metrics
+
+Metrics are published every minute to two CloudWatch namespaces, dimensioned by `Per-Instance Metrics = <EC2 instance ID or ECS task ID>`.
+
+## Java Statistics
+
+CloudWatch namespace: `Java`. All values represent the current value or the count/total time during that minute.
 
 - Number of Garbage Collections
 - Time spent performing Garbage Collection
@@ -33,8 +38,9 @@ The plugin self-disables on startup if instance metadata is unreachable.
 - Process CPU Load
 - System CPU Load
 
- ## Minecraft Statistics
- All Minecraft statistics collected are per minute and represent the maximum value, count or total time during that period.
+## Minecraft Statistics
+
+CloudWatch namespace: `Minecraft`. All values represent the maximum value, count, or total time during that minute.
 
 - Number of Online Players
 - Maximum Tick Time
