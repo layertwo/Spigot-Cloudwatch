@@ -9,7 +9,7 @@ public class ProjectileLaunchListener extends EventCountListener {
     @EventHandler(priority=EventPriority.MONITOR)
     @SuppressWarnings("unused")
     public void onEvent(ProjectileLaunchEvent event) {
-        count++;
+        count.incrementAndGet();
     }
 
 }

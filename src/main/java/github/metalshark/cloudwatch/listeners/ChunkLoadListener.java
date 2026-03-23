@@ -8,35 +8,36 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.event.world.ChunkUnloadEvent;
 
+import java.util.concurrent.atomic.AtomicLong;
+
 public class ChunkLoadListener implements Listener {
 
-    private double count = 0;
-    private double max = 0;
+    private final AtomicLong count = new AtomicLong(0);
+    private final AtomicLong max = new AtomicLong(0);
 
     public ChunkLoadListener init() {
         for (World world : Bukkit.getWorlds()) {
-            count += world.getLoadedChunks().length;
+            count.addAndGet(world.getLoadedChunks().length);
         }
+        max.set(count.get());
         return this;
     }
 
     @EventHandler(priority=EventPriority.MONITOR)
     @SuppressWarnings("unused")
     public void onChunkLoad(ChunkLoadEvent event) {
-        count++;
-        if (count > max) max = count;
+        long c = count.incrementAndGet();
+        max.accumulateAndGet(c, Math::max);
     }
 
     @EventHandler(priority=EventPriority.MONITOR)
     @SuppressWarnings("unused")
     public void onChunkUnload(ChunkUnloadEvent event) {
-        count--;
+        count.decrementAndGet();
     }
 
     public double getMaxAndReset() {
-        final double prevMax = max;
-        max = count;
-        return prevMax;
+        return max.getAndSet(count.get());
     }
 
 }

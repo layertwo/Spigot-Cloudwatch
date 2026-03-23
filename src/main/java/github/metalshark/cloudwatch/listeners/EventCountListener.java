@@ -2,14 +2,14 @@ package github.metalshark.cloudwatch.listeners;
 
 import org.bukkit.event.Listener;
 
+import java.util.concurrent.atomic.AtomicLong;
+
 public class EventCountListener implements Listener {
 
-    protected double count = 0;
+    protected final AtomicLong count = new AtomicLong(0);
 
     public double getCountAndReset() {
-        final double oldCount = count;
-        count = 0;
-        return oldCount;
+        return count.getAndSet(0);
     }
 
 }
