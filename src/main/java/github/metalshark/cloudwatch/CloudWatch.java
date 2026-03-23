@@ -20,6 +20,13 @@ import software.amazon.awssdk.regions.internal.util.EC2MetadataUtils;
 import software.amazon.awssdk.services.cloudwatch.CloudWatchClient;
 import software.amazon.awssdk.services.cloudwatch.model.Dimension;
 
+import org.yaml.snakeyaml.Yaml;
+
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.*;
 
@@ -53,21 +60,50 @@ public class CloudWatch extends JavaPlugin {
     @Getter
     private CloudWatchClient cloudWatchClient;
 
+    private static String resolveInstanceId() {
+        try {
+            return EC2MetadataUtils.getInstanceId();
+        } catch (SdkClientException ignored) {}
+
+        final String metadataUri = System.getenv("ECS_CONTAINER_METADATA_URI_V4");
+        if (metadataUri == null) return null;
+
+        try {
+            final HttpClient client = HttpClient.newHttpClient();
+            final HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(metadataUri + "/task"))
+                .timeout(Duration.ofSeconds(2))
+                .build();
+            final String body = client.send(request, HttpResponse.BodyHandlers.ofString()).body();
+            @SuppressWarnings("unchecked")
+            final Map<String, Object> metadata = new Yaml().load(body);
+            final String taskArn = (String) metadata.get("TaskARN");
+            if (taskArn == null) return null;
+            return taskArn.substring(taskArn.lastIndexOf('/') + 1);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return null;
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+
     @Override
     public void onEnable() {
         eventCountListeners.clear();
 
-        try {
-            dimension = Dimension
-                .builder()
-                .name("Per-Instance Metrics")
-                .value(EC2MetadataUtils.getInstanceId())
-                .build();
-        } catch (SdkClientException exception) {
-            getLogger().warning("The CloudWatch plugin only works on EC2 instances.");
+        final String instanceId = resolveInstanceId();
+        if (instanceId == null) {
+            getLogger().warning("The CloudWatch plugin requires EC2 or ECS/Fargate instance metadata.");
             this.setEnabled(false);
             return;
         }
+
+        dimension = Dimension
+            .builder()
+            .name("Per-Instance Metrics")
+            .value(instanceId)
+            .build();
 
         cloudWatchClient = CloudWatchClient.builder().build();
 

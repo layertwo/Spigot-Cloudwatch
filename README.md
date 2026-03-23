@@ -1,12 +1,27 @@
 # CloudWatch
- [AWS CloudWatch](https://aws.amazon.com/cloudwatch/) monitoring plugin for Minecraft.
 
- No longer actively maintained. Please see https://github.com/MatthewDietrich/CloudWatch instead.
+[AWS CloudWatch](https://aws.amazon.com/cloudwatch/) monitoring plugin for Minecraft Spigot servers running on AWS.
 
- Requires the [Systems Manager](https://aws.amazon.com/systems-manager/) agent to have a role with the `cloudwatch:PutMetricData` [permission](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/permissions-reference-cw.html). This plugin is designed for Unix Operating Systems, such as Linux, and some statistics may not be recorded on other operating systems.
+Requires an IAM role with `cloudwatch:PutMetricData` [permission](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/permissions-reference-cw.html). Unix/Linux only — some statistics (file descriptors, CPU load) are unavailable on other operating systems.
 
- ## Java Statistics
- All Java statistics collected are per minute and represent the current value or the count/total time during that period.
+## Installation
+
+Build the fat JAR and drop it into your Spigot `plugins/` directory:
+
+```bash
+mvn clean package
+# Output: target/CloudWatch-<version>.jar
+```
+
+The plugin self-disables on startup if instance metadata is unreachable. Requires Spigot 1.13+.
+
+## Metrics
+
+Metrics are published every minute to two CloudWatch namespaces, dimensioned by `Per-Instance Metrics = <EC2 instance ID or ECS task ID>`.
+
+## Java Statistics
+
+CloudWatch namespace: `Java`. All values represent the current value or the count/total time during that minute.
 
 - Number of Garbage Collections
 - Time spent performing Garbage Collection
@@ -23,8 +38,9 @@
 - Process CPU Load
 - System CPU Load
 
- ## Minecraft Statistics
- All Minecraft statistics collected are per minute and represent the maximum value, count or total time during that period.
+## Minecraft Statistics
+
+CloudWatch namespace: `Minecraft`. All values represent the maximum value, count, or total time during that minute.
 
 - Number of Online Players
 - Maximum Tick Time
