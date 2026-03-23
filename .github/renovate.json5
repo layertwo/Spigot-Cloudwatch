@@ -7,5 +7,13 @@
     ':disableRateLimiting',
     ':semanticCommits',
     'github>layertwo/renovate-config'
+  ],
+  packageRules: [
+    {
+      matchManagers: ['maven'],
+      matchPackageNames: ['org.spigotmc:spigot-api'],
+      registryUrls: ['https://hub.spigotmc.org/nexus/content/repositories/snapshots/'],
+      ignoreUnstable: false
+    }
   ]
 }
