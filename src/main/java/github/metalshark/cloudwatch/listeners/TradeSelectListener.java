@@ -9,7 +9,7 @@ public class TradeSelectListener extends EventCountListener {
     @EventHandler(priority=EventPriority.MONITOR)
     @SuppressWarnings("unused")
     public void onEvent(TradeSelectEvent event) {
-        count++;
+        count.incrementAndGet();
     }
 
 }

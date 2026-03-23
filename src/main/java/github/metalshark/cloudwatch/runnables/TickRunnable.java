@@ -2,9 +2,9 @@ package github.metalshark.cloudwatch.runnables;
 
 public class TickRunnable implements Runnable {
 
-    private static long lastTimeMillis = System.currentTimeMillis();
-    private static double maxElapsedMillis = 0;
-    private static double numberOfTicks = 0;
+    private long lastTimeMillis = System.currentTimeMillis();
+    private long maxElapsedMillis = 0;
+    private long numberOfTicks = 0;
 
     @Override
     public synchronized void run() {
@@ -15,16 +15,16 @@ public class TickRunnable implements Runnable {
         numberOfTicks++;
     }
 
-    public double getMaxElapsedMillisAndReset() {
-        final double oldMaxElapsedMillis = maxElapsedMillis;
+    public synchronized double getMaxElapsedMillisAndReset() {
+        final long old = maxElapsedMillis;
         maxElapsedMillis = 0;
-        return oldMaxElapsedMillis;
+        return old;
     }
 
-    public double getNumberOfTicksAndReset() {
-        final double oldNumberOfTicks = numberOfTicks;
+    public synchronized double getNumberOfTicksAndReset() {
+        final long old = numberOfTicks;
         numberOfTicks = 0;
-        return oldNumberOfTicks;
+        return old;
     }
 
 }

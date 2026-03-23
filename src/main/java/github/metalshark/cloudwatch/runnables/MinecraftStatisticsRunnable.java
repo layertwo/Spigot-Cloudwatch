@@ -5,8 +5,8 @@ import github.metalshark.cloudwatch.listeners.*;
 import software.amazon.awssdk.services.cloudwatch.CloudWatchClient;
 import software.amazon.awssdk.services.cloudwatch.model.*;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 public class MinecraftStatisticsRunnable implements Runnable {
 
@@ -26,7 +26,8 @@ public class MinecraftStatisticsRunnable implements Runnable {
         final double ticksPerMinute = tickRunnable.getNumberOfTicksAndReset();
         final double ticksPerSecond = ticksPerMinute / 60;
 
-        try (final CloudWatchClient cw = CloudWatchClient.builder().build()) {
+        final CloudWatchClient cw = CloudWatch.getPlugin().getCloudWatchClient();
+        try {
 
             final MetricDatum chunksLoadedMetric = MetricDatum
                 .builder()
@@ -57,17 +58,17 @@ public class MinecraftStatisticsRunnable implements Runnable {
                 .dimensions(dimension)
                 .build();
 
-            final Set<MetricDatum> metricDatumSet = new HashSet<>();
-            metricDatumSet.add(chunksLoadedMetric);
-            metricDatumSet.add(maxTickTimeMetric);
-            metricDatumSet.add(onlinePlayersMetric);
-            metricDatumSet.add(ticksPerSecondMetric);
+            final List<MetricDatum> metricDatumList = new ArrayList<>();
+            metricDatumList.add(chunksLoadedMetric);
+            metricDatumList.add(maxTickTimeMetric);
+            metricDatumList.add(onlinePlayersMetric);
+            metricDatumList.add(ticksPerSecondMetric);
 
             CloudWatch
                 .getEventCountListeners()
                 .forEach((name, listener) -> {
                     final double count = listener.getCountAndReset();
-                    metricDatumSet.add(MetricDatum
+                    metricDatumList.add(MetricDatum
                         .builder()
                         .metricName(name)
                         .unit(StandardUnit.COUNT)
@@ -76,16 +77,13 @@ public class MinecraftStatisticsRunnable implements Runnable {
                         .build());
                 });
 
-            MetricDatum[] metrics = new MetricDatum[metricDatumSet.size()];
-            metricDatumSet.toArray(metrics);
-
             final PutMetricDataRequest request = PutMetricDataRequest
                 .builder()
                 .namespace("Minecraft")
-                .metricData(metrics)
+                .metricData(metricDatumList)
                 .build();
 
-            final PutMetricDataResponse result = cw.putMetricData(request);
+            cw.putMetricData(request);
         } catch (CloudWatchException e) {
             CloudWatch.getPlugin().getLogger().severe(e.awsErrorDetails().errorMessage());
         }

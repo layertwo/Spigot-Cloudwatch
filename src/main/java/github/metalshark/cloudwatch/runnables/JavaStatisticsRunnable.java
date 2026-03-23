@@ -11,11 +11,11 @@ import java.lang.management.OperatingSystemMXBean;
 
 public class JavaStatisticsRunnable implements Runnable {
 
-    private static double prevTotalGarbageCollections = 0;
-    private static double prevTotalGarbageCollectionTime = 0;
+    private double prevTotalGarbageCollections = 0;
+    private double prevTotalGarbageCollectionTime = 0;
+    private boolean firstRun = true;
 
     public void run() {
-        final boolean firstRun = (prevTotalGarbageCollections + prevTotalGarbageCollectionTime) == 0;
 
         double totalGarbageCollections = 0;
         double totalGarbageCollectionTime = 0;
@@ -40,7 +40,10 @@ public class JavaStatisticsRunnable implements Runnable {
         prevTotalGarbageCollections = totalGarbageCollections;
         prevTotalGarbageCollectionTime = totalGarbageCollectionTime;
 
-        if (firstRun) return;
+        if (firstRun) {
+            firstRun = false;
+            return;
+        }
 
         // Get current size of heap in bytes
         final double heapSize = Runtime.getRuntime().totalMemory();
@@ -73,7 +76,8 @@ public class JavaStatisticsRunnable implements Runnable {
 
         final Dimension dimension = CloudWatch.getDimension();
 
-        try (final CloudWatchClient cw = CloudWatchClient.builder().build()) {
+        final CloudWatchClient cw = CloudWatch.getPlugin().getCloudWatchClient();
+        try {
             final MetricDatum garbageCollectionsMetric = MetricDatum
                 .builder()
                 .metricName("GarbageCollections")
@@ -119,7 +123,7 @@ public class JavaStatisticsRunnable implements Runnable {
             final MetricDatum threadCountMetric = MetricDatum
                 .builder()
                 .metricName("Threads")
-                .unit(StandardUnit.BYTES)
+                .unit(StandardUnit.COUNT)
                 .value(threadCount)
                 .dimensions(dimension)
                 .build();
@@ -160,14 +164,14 @@ public class JavaStatisticsRunnable implements Runnable {
                 .build();
             final MetricDatum processCpuLoadMetric = MetricDatum
                 .builder()
-                .metricName("ProcessCpuLoad%")
+                .metricName("ProcessCpuLoad")
                 .unit(StandardUnit.PERCENT)
                 .value(processCpuLoad)
                 .dimensions(dimension)
                 .build();
             final MetricDatum systemCpuLoadMetric = MetricDatum
                 .builder()
-                .metricName("SystemCpuLoad%")
+                .metricName("SystemCpuLoad")
                 .unit(StandardUnit.PERCENT)
                 .value(systemCpuLoad)
                 .dimensions(dimension)
@@ -196,7 +200,7 @@ public class JavaStatisticsRunnable implements Runnable {
                 .metricData(metrics)
                 .build();
 
-            final PutMetricDataResponse result = cw.putMetricData(request);
+            cw.putMetricData(request);
         } catch (CloudWatchException e) {
             CloudWatch.getPlugin().getLogger().severe(e.awsErrorDetails().errorMessage());
         }

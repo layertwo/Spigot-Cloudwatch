@@ -8,35 +8,36 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
+import java.util.concurrent.atomic.AtomicLong;
+
 public class PlayerJoinListener implements Listener {
 
-    private double count = 0;
-    private double max = 0;
+    private final AtomicLong count = new AtomicLong(0);
+    private final AtomicLong max = new AtomicLong(0);
 
     public PlayerJoinListener init() {
         for (World world : Bukkit.getWorlds()) {
-            count += world.getPlayers().size();
+            count.addAndGet(world.getPlayers().size());
         }
+        max.set(count.get());
         return this;
     }
 
     @EventHandler(priority=EventPriority.MONITOR)
     @SuppressWarnings("unused")
     public void onPlayerJoin(PlayerJoinEvent event) {
-        count++;
-        if (count > max) max = count;
+        long c = count.incrementAndGet();
+        max.accumulateAndGet(c, Math::max);
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
     @SuppressWarnings("unused")
     public void onPlayerLeave(PlayerQuitEvent event) {
-        count--;
+        count.decrementAndGet();
     }
 
     public double getMaxAndReset() {
-        final double prevMax = max;
-        max = count;
-        return prevMax;
+        return max.getAndSet(count.get());
     }
 
 }

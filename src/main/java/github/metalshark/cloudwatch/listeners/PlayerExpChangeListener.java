@@ -9,7 +9,7 @@ public class PlayerExpChangeListener extends EventCountListener {
     @EventHandler(priority=EventPriority.MONITOR)
     @SuppressWarnings("unused")
     public void onEvent(PlayerExpChangeEvent event) {
-        count++;
+        count.incrementAndGet();
     }
 
 }

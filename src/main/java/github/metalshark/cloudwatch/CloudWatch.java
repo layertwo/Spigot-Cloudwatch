@@ -17,6 +17,7 @@ import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import software.amazon.awssdk.core.exception.SdkClientException;
 import software.amazon.awssdk.regions.internal.util.EC2MetadataUtils;
+import software.amazon.awssdk.services.cloudwatch.CloudWatchClient;
 import software.amazon.awssdk.services.cloudwatch.model.Dimension;
 
 import java.util.Map;
@@ -49,8 +50,13 @@ public class CloudWatch extends JavaPlugin {
     @Getter
     private static Dimension dimension;
 
+    @Getter
+    private CloudWatchClient cloudWatchClient;
+
     @Override
     public void onEnable() {
+        eventCountListeners.clear();
+
         try {
             dimension = Dimension
                 .builder()
@@ -62,6 +68,8 @@ public class CloudWatch extends JavaPlugin {
             this.setEnabled(false);
             return;
         }
+
+        cloudWatchClient = CloudWatchClient.builder().build();
 
         final PluginManager pluginManager = Bukkit.getPluginManager();
 
@@ -75,8 +83,8 @@ public class CloudWatch extends JavaPlugin {
         eventCountListeners.put("InventoriesOpened", new InventoryOpenListener());
         eventCountListeners.put("InventoryClicks", new InventoryClickListener());
         eventCountListeners.put("InventoryDrags", new InventoryDragListener());
-        eventCountListeners.put("ItemsDespawned", new ItemSpawnListener());
-        eventCountListeners.put("ItemsSpawned", new ItemDespawnListener());
+        eventCountListeners.put("ItemsSpawned", new ItemSpawnListener());
+        eventCountListeners.put("ItemsDespawned", new ItemDespawnListener());
         eventCountListeners.put("PlayerDropItems", new PlayerDropItemListener());
         eventCountListeners.put("PlayerExperienceChanges", new PlayerExpChangeListener());
         eventCountListeners.put("PlayerInteractions", new PlayerInteractListener());
@@ -110,8 +118,15 @@ public class CloudWatch extends JavaPlugin {
             HandlerList.unregisterAll(listener);
         }
 
-        if (javaStatisticsExecutor != null) javaStatisticsExecutor.shutdown();
-        if (minecraftStatisticsExecutor != null) minecraftStatisticsExecutor.shutdown();
+        if (javaStatisticsExecutor != null) {
+            javaStatisticsExecutor.shutdown();
+            try { javaStatisticsExecutor.awaitTermination(5, TimeUnit.SECONDS); } catch (InterruptedException ignored) {}
+        }
+        if (minecraftStatisticsExecutor != null) {
+            minecraftStatisticsExecutor.shutdown();
+            try { minecraftStatisticsExecutor.awaitTermination(5, TimeUnit.SECONDS); } catch (InterruptedException ignored) {}
+        }
+        if (cloudWatchClient != null) cloudWatchClient.close();
     }
 
     public static CloudWatch getPlugin() {
