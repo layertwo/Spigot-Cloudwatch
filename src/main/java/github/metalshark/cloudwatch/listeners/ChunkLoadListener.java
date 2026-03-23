@@ -15,7 +15,7 @@ public class ChunkLoadListener implements Listener {
 
     public ChunkLoadListener init() {
         for (World world : Bukkit.getWorlds()) {
-            count = world.getLoadedChunks().length;
+            count += world.getLoadedChunks().length;
         }
         return this;
     }
