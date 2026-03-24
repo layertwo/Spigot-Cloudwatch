@@ -25,7 +25,7 @@ jobs:
         run: echo "version=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_OUTPUT
       - name: Upload JAR artifact
         if: github.event_name == 'push' && github.ref == 'refs/heads/mainline'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: CloudWatch-${{ steps.get_version.outputs.version }}
           path: target/CloudWatch-*.jar
