@@ -19,10 +19,14 @@ jobs:
           cache: 'maven'
       - name: Build with Maven
         run: mvn --batch-mode --update-snapshots package
+      - name: Get version
+        if: github.event_name == 'push' && github.ref == 'refs/heads/mainline'
+        id: get_version
+        run: echo "version=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_OUTPUT
       - name: Upload JAR artifact
         if: github.event_name == 'push' && github.ref == 'refs/heads/mainline'
         uses: actions/upload-artifact@v4
         with:
-          name: CloudWatch-${{ github.sha }}
+          name: CloudWatch-${{ steps.get_version.outputs.version }}
           path: target/CloudWatch-*.jar
           if-no-files-found: error
