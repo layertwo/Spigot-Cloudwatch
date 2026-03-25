@@ -15,6 +15,26 @@ mvn clean package
 
 The plugin self-disables on startup if instance metadata is unreachable. Requires Spigot 1.13+.
 
+## Development
+
+### Prerequisites
+
+- Java 17+
+- Maven 3.6+
+
+### Running Tests
+
+```bash
+mvn test
+```
+
+Tests cover the core metric-tracking components:
+
+- **TickRunnable** — tick counting and max elapsed time tracking
+- **EventCountListener** — atomic event counter with reset semantics
+- **ChunkLoadListener** — chunk load/unload tracking with high-water mark
+- **PlayerJoinListener** — player count tracking with high-water mark
+
 ## Metrics
 
 Metrics are published every minute to two CloudWatch namespaces, dimensioned by `Per-Instance Metrics = <EC2 instance ID or ECS task ID>`.
