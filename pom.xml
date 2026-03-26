@@ -16,7 +16,7 @@
         <!-- Removes warnings -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <!-- Used in plugin.yml -->
-        <mainClass>${project.groupId}.${project.artifactId}</mainClass>
+        <mainClass>${project.groupId}.CloudWatch</mainClass>
         <!-- Also used in plugin.yml -->
         <author>layertwo</author>
     </properties>
