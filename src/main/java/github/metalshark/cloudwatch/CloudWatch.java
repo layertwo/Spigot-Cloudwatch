@@ -92,17 +92,25 @@ public class CloudWatch extends JavaPlugin {
     public void onEnable() {
         eventCountListeners.clear();
 
-        final String instanceId = resolveInstanceId();
-        if (instanceId == null) {
-            getLogger().warning("The CloudWatch plugin requires EC2 or ECS/Fargate instance metadata.");
+        saveDefaultConfig();  // loads config.yml defaults before getConfig() is readable
+
+        String server = System.getenv("SPIGOT_CLOUDWATCH_SERVER");
+        if (server == null || server.isEmpty()) {
+            server = getConfig().getString("server", "");
+        }
+        if (server == null || server.isEmpty()) {
+            server = resolveInstanceId();
+        }
+        if (server == null || server.isEmpty()) {
+            getLogger().warning("Could not determine server identity. Disabling CloudWatch plugin.");
             this.setEnabled(false);
             return;
         }
 
         dimension = Dimension
             .builder()
-            .name("Per-Instance Metrics")
-            .value(instanceId)
+            .name("Server")
+            .value(server)
             .build();
 
         cloudWatchClient = CloudWatchClient.builder().build();
