@@ -21,17 +21,17 @@ class EventCountListenerTest {
 
     @Test
     void getCountAndReset_returnsAccumulatedCount() {
-        listener.count.incrementAndGet();
-        listener.count.incrementAndGet();
-        listener.count.incrementAndGet();
+        listener.increment();
+        listener.increment();
+        listener.increment();
 
         assertEquals(3, listener.getCountAndReset());
     }
 
     @Test
     void getCountAndReset_resetsToZeroAfterRead() {
-        listener.count.incrementAndGet();
-        listener.count.incrementAndGet();
+        listener.increment();
+        listener.increment();
 
         listener.getCountAndReset();
         assertEquals(0, listener.getCountAndReset());
@@ -39,23 +39,23 @@ class EventCountListenerTest {
 
     @Test
     void getCountAndReset_handlesMultipleCycles() {
-        listener.count.addAndGet(5);
+        for (int i = 0; i < 5; i++) listener.increment();
         assertEquals(5, listener.getCountAndReset());
 
-        listener.count.addAndGet(3);
+        for (int i = 0; i < 3; i++) listener.increment();
         assertEquals(3, listener.getCountAndReset());
 
         assertEquals(0, listener.getCountAndReset());
     }
 
     @Test
-    void count_isThreadSafe() throws InterruptedException {
+    void increment_isThreadSafe() throws InterruptedException {
         final int iterations = 1000;
         Thread t1 = new Thread(() -> {
-            for (int i = 0; i < iterations; i++) listener.count.incrementAndGet();
+            for (int i = 0; i < iterations; i++) listener.increment();
         });
         Thread t2 = new Thread(() -> {
-            for (int i = 0; i < iterations; i++) listener.count.incrementAndGet();
+            for (int i = 0; i < iterations; i++) listener.increment();
         });
 
         t1.start();

@@ -13,7 +13,26 @@ mvn clean package
 # Output: target/CloudWatch-<version>.jar
 ```
 
-The plugin self-disables on startup if instance metadata is unreachable. Requires Spigot 1.13+.
+Requires Spigot 1.13+.
+
+## Configuration
+
+The plugin needs a server name to use as the CloudWatch dimension value. It resolves the name in this order:
+
+1. `SPIGOT_CLOUDWATCH_SERVER` environment variable
+2. `server` key in `plugins/CloudWatch/config.yml`
+3. EC2 instance ID (via EC2 instance metadata service)
+4. ECS task ID (via `ECS_CONTAINER_METADATA_URI_V4` metadata endpoint)
+
+The plugin self-disables on startup if no server identity can be determined from any of these sources.
+
+**config.yml** (auto-generated on first run):
+
+```yaml
+server: ""
+```
+
+Set `server` to a stable name for your instance if you are not running on EC2 or ECS, or want to override the auto-detected value.
 
 ## Development
 
@@ -37,7 +56,7 @@ Tests cover the core metric-tracking components:
 
 ## Metrics
 
-Metrics are published every minute to two CloudWatch namespaces, dimensioned by `Per-Instance Metrics = <EC2 instance ID or ECS task ID>`.
+Metrics are published every minute to two CloudWatch namespaces, dimensioned by `Server = <server name>`.
 
 ## Java Statistics
 

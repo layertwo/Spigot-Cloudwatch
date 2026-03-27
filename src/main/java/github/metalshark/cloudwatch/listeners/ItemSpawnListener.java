@@ -9,7 +9,7 @@ public class ItemSpawnListener extends EventCountListener {
     @EventHandler(priority=EventPriority.MONITOR)
     @SuppressWarnings("unused")
     public void onEvent(ItemSpawnEvent event) {
-        count.incrementAndGet();
+        increment();
     }
 
 }

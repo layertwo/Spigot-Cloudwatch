@@ -9,7 +9,7 @@ public class InventoryCloseListener extends EventCountListener {
     @EventHandler(priority=EventPriority.MONITOR)
     @SuppressWarnings("unused")
     public void onEvent(InventoryCloseEvent event) {
-        count.incrementAndGet();
+        increment();
     }
 
 }
