@@ -6,6 +6,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import github.metalshark.cloudwatch.listeners.*;
 import github.metalshark.cloudwatch.runnables.JavaStatisticsRunnable;
 import github.metalshark.cloudwatch.runnables.MinecraftStatisticsRunnable;
+import github.metalshark.cloudwatch.runnables.EntityCountSampler;
 import github.metalshark.cloudwatch.runnables.TickRunnable;
 import lombok.Getter;
 import org.bukkit.Bukkit;
@@ -40,6 +41,9 @@ public class CloudWatch extends JavaPlugin {
 
     @Getter
     private final TickRunnable tickRunnable = new TickRunnable();
+
+    @Getter
+    private final EntityCountSampler entityCountSampler = new EntityCountSampler();
 
     @Getter
     private final static Map<String, EventCountListener> eventCountListeners = new ConcurrentHashMap<>();
@@ -174,6 +178,7 @@ public class CloudWatch extends JavaPlugin {
             new MinecraftStatisticsRunnable(this, dimension, cloudWatchClient), 0, 1, TimeUnit.MINUTES);
 
         Bukkit.getServer().getScheduler().runTaskTimerAsynchronously(this, tickRunnable, 1, 1);
+        Bukkit.getServer().getScheduler().runTaskTimer(this, entityCountSampler, 0, 1200);
     }
 
     @Override

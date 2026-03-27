@@ -84,6 +84,7 @@ CloudWatch namespace: `Minecraft`. All values represent the maximum value, count
 - Number of Online Players
 - Maximum Tick Time
 - Ticks per Second
+- Number of Entities (live count across all worlds)
 - Number of Chunks Loaded
 - Number of Chunks Populated
 - Number of Creatures Spawned
