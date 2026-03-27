@@ -6,7 +6,7 @@
 
     <groupId>github.metalshark.cloudwatch</groupId>
     <artifactId>spigot-cloudwatch</artifactId>
-    <version>1.4.1</version>
+    <version>1.5.0</version>
 
     <name>CloudWatch</name>
     <description>CloudWatch statistic logging for Minecraft Servers.</description>
