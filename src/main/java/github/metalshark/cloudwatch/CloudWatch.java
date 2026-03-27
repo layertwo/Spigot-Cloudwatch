@@ -1,5 +1,7 @@
 package github.metalshark.cloudwatch;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import github.metalshark.cloudwatch.listeners.*;
 import github.metalshark.cloudwatch.runnables.JavaStatisticsRunnable;
@@ -19,8 +21,6 @@ import software.amazon.awssdk.core.exception.SdkClientException;
 import software.amazon.awssdk.regions.internal.util.EC2MetadataUtils;
 import software.amazon.awssdk.services.cloudwatch.CloudWatchClient;
 import software.amazon.awssdk.services.cloudwatch.model.Dimension;
-
-import org.yaml.snakeyaml.Yaml;
 
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -51,11 +51,13 @@ public class CloudWatch extends JavaPlugin {
         .setNameFormat("CloudWatch - Minecraft Statistics")
         .build();
 
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+
     private ScheduledExecutorService javaStatisticsExecutor;
     private ScheduledExecutorService minecraftStatisticsExecutor;
 
     @Getter
-    private static Dimension dimension;
+    private Dimension dimension;
 
     @Getter
     private CloudWatchClient cloudWatchClient;
@@ -68,41 +70,63 @@ public class CloudWatch extends JavaPlugin {
         final String metadataUri = System.getenv("ECS_CONTAINER_METADATA_URI_V4");
         if (metadataUri == null) return null;
 
+        // Prevent SSRF: only allow the ECS task metadata endpoint
         try {
-            final HttpClient client = HttpClient.newHttpClient();
+            final URI uri = URI.create(metadataUri);
+            if (!"http".equals(uri.getScheme()) || !"169.254.170.2".equals(uri.getHost())) {
+                return null;
+            }
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+
+        final ExecutorService httpExecutor = Executors.newSingleThreadExecutor();
+        try {
+            final HttpClient client = HttpClient.newBuilder().executor(httpExecutor).build();
             final HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(metadataUri + "/task"))
                 .timeout(Duration.ofSeconds(2))
                 .build();
             final String body = client.send(request, HttpResponse.BodyHandlers.ofString()).body();
-            @SuppressWarnings("unchecked")
-            final Map<String, Object> metadata = new Yaml().load(body);
-            final String taskArn = (String) metadata.get("TaskARN");
-            if (taskArn == null) return null;
+            final JsonNode metadata = OBJECT_MAPPER.readTree(body);
+            final JsonNode taskArnNode = metadata.get("TaskARN");
+            if (taskArnNode == null || taskArnNode.isNull()) return null;
+            final String taskArn = taskArnNode.asText();
             return taskArn.substring(taskArn.lastIndexOf('/') + 1);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             return null;
         } catch (Exception ignored) {
             return null;
+        } finally {
+            httpExecutor.shutdownNow();
         }
+    }
+
+    private String resolveServer() {
+        String s = System.getenv("SPIGOT_CLOUDWATCH_SERVER");
+        if (s != null && !s.isBlank()) return s.trim();
+        s = getConfig().getString("server", "");
+        return s != null ? s.trim() : "";
     }
 
     @Override
     public void onEnable() {
         eventCountListeners.clear();
 
-        saveDefaultConfig();  // loads config.yml defaults before getConfig() is readable
+        saveDefaultConfig();
 
-        String server = System.getenv("SPIGOT_CLOUDWATCH_SERVER");
-        if (server == null || server.isEmpty()) {
-            server = getConfig().getString("server", "");
-        }
-        if (server == null || server.isEmpty()) {
+        String server = resolveServer();
+        if (server.isEmpty()) {
             server = resolveInstanceId();
         }
         if (server == null || server.isEmpty()) {
             getLogger().warning("Could not determine server identity. Disabling CloudWatch plugin.");
+            this.setEnabled(false);
+            return;
+        }
+        if (server.length() > 256 || !server.chars().allMatch(c -> c >= 0x20 && c <= 0x7E)) {
+            getLogger().warning("Server identity is invalid (must be 1-256 printable ASCII characters). Disabling CloudWatch plugin.");
             this.setEnabled(false);
             return;
         }
@@ -142,10 +166,12 @@ public class CloudWatch extends JavaPlugin {
         }
 
         javaStatisticsExecutor = Executors.newSingleThreadScheduledExecutor(javaStatisticsThreadFactory);
-        javaStatisticsExecutor.scheduleAtFixedRate(new JavaStatisticsRunnable(), 0, 1, TimeUnit.MINUTES);
+        javaStatisticsExecutor.scheduleAtFixedRate(
+            new JavaStatisticsRunnable(dimension, cloudWatchClient), 0, 1, TimeUnit.MINUTES);
 
         minecraftStatisticsExecutor = Executors.newSingleThreadScheduledExecutor(minecraftStatisticsThreadFactory);
-        minecraftStatisticsExecutor.scheduleAtFixedRate(new MinecraftStatisticsRunnable(), 0, 1, TimeUnit.MINUTES);
+        minecraftStatisticsExecutor.scheduleAtFixedRate(
+            new MinecraftStatisticsRunnable(this, dimension, cloudWatchClient), 0, 1, TimeUnit.MINUTES);
 
         Bukkit.getServer().getScheduler().runTaskTimerAsynchronously(this, tickRunnable, 1, 1);
     }

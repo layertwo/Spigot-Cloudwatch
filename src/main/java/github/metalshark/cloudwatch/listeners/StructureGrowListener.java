@@ -9,7 +9,7 @@ public class StructureGrowListener extends EventCountListener {
     @EventHandler(priority=EventPriority.MONITOR)
     @SuppressWarnings("unused")
     public void onEvent(StructureGrowEvent event) {
-        count.incrementAndGet();
+        increment();
     }
 
 }

@@ -9,7 +9,7 @@ public class PlayerDropItemListener extends EventCountListener {
     @EventHandler(priority=EventPriority.MONITOR)
     @SuppressWarnings("unused")
     public void onEvent(PlayerDropItemEvent event) {
-        count.incrementAndGet();
+        increment();
     }
 
 }
