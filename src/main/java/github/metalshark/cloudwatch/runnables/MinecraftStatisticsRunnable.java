@@ -23,13 +23,15 @@ public class MinecraftStatisticsRunnable implements Runnable {
     public void run() {
         final double chunksLoaded = plugin.getChunkLoadListener().getMaxAndReset();
         final double onlinePlayers = plugin.getPlayerJoinListener().getMaxAndReset();
+        final double entityCount = plugin.getEntityCountSampler().getEntityCount();
 
         final TickRunnable tickRunnable = plugin.getTickRunnable();
         final double maxTickTime = tickRunnable.getMaxElapsedMillisAndReset();
         final double ticksPerSecond = tickRunnable.getNumberOfTicksAndReset() / 60.0;
 
         try {
-            final List<MetricDatum> metrics = new ArrayList<>(4 + CloudWatch.getEventCountListeners().size());
+            final List<MetricDatum> metrics = new ArrayList<>(5 + CloudWatch.getEventCountListeners().size());
+            metrics.add(MetricDatum.builder().metricName("EntityCount").unit(StandardUnit.COUNT).value(entityCount).dimensions(dimension).build());
             metrics.add(MetricDatum.builder().metricName("ChunksLoaded").unit(StandardUnit.COUNT).value(chunksLoaded).dimensions(dimension).build());
             metrics.add(MetricDatum.builder().metricName("OnlinePlayers").unit(StandardUnit.COUNT).value(onlinePlayers).dimensions(dimension).build());
             metrics.add(MetricDatum.builder().metricName("MaxTickTime").unit(StandardUnit.MILLISECONDS).value(maxTickTime).dimensions(dimension).build());
